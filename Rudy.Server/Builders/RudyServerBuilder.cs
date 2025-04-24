@@ -1,4 +1,6 @@
-﻿using Rudy.Server.Managers;
+﻿using System.Net;
+using Rudy.Server.Managers;
+using Rudy.Server.Processors;
 using Rudy.Server.Stores;
 
 namespace Rudy.Server.Builders;
@@ -10,18 +12,32 @@ public class RudyServerBuilder
     private readonly ReplicaManager _replicaManager;
     private readonly MemoryStore _memoryStore;
     private int _port;
+    private IPAddress _ipAddress;
 
     private RudyServerBuilder()
     {
+        _ipAddress = IPAddress.Any;
         _memoryStore = MemoryStore.Create();
         _diskStore = new DiskStore();
         _pubSubManager = new PubSubManager();
-        _replicaManager = new ReplicaManager();
+        _replicaManager = new ReplicaManager(new CommandProcessor(_memoryStore, _diskStore));
     }
 
     public static RudyServerBuilder Initialize()
     {
         return new RudyServerBuilder();
+    }
+
+    public RudyServerBuilder WithIpAddress(string ipAddress)
+    {
+        _ipAddress = IPAddress.Parse(ipAddress);
+        return this;
+    }
+    
+    public RudyServerBuilder WithIpAddress(IPAddress ipAddress)
+    {
+        _ipAddress = ipAddress;
+        return this;
     }
 
     public RudyServerBuilder WithPort(int port)
@@ -32,7 +48,7 @@ public class RudyServerBuilder
 
     public TcpServer Build()
     {
-        return new TcpServer(_port, _replicaManager, _pubSubManager, _diskStore, _memoryStore);
+        return new TcpServer(_ipAddress, _port, _replicaManager, _pubSubManager, _diskStore, _memoryStore);
     }
     
 }

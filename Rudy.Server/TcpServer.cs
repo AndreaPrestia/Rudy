@@ -7,33 +7,46 @@ namespace Rudy.Server;
 
 public class TcpServer
 {
+    private readonly CancellationTokenSource _cts = new();
     private readonly TcpListener _listener;
     private readonly ReplicaManager _replicaManager;
     private readonly PubSubManager _pubSubManager;
     private readonly DiskStore _diskStore;
     private readonly MemoryStore _memoryStore;
-    private readonly List<StreamWriter> _replicaStreams = new();
 
-    internal TcpServer(int port, ReplicaManager replicaManager, PubSubManager pubSubManager, DiskStore diskStore, MemoryStore memoryStore)
+    internal TcpServer(IPAddress ipAddress, int port, ReplicaManager replicaManager, PubSubManager pubSubManager, DiskStore diskStore, MemoryStore memoryStore)
     {
         _replicaManager = replicaManager;
         _pubSubManager = pubSubManager;
         _diskStore = diskStore;
         _memoryStore = memoryStore;
-        _listener = new TcpListener(IPAddress.Any, port);
+        _listener = new TcpListener(ipAddress, port);
     }
     
-    public async Task StartAsync(CancellationToken token)
+    public async Task StartAsync()
     {
         _listener.Start();
         Console.WriteLine("Rudy server started on port " + ((IPEndPoint)_listener.LocalEndpoint).Port);
 
-        while (!token.IsCancellationRequested)
+        while (!_cts.Token.IsCancellationRequested)
         {
-            var client = await _listener.AcceptTcpClientAsync(token);
-            _ = Task.Run(() => HandleClientAsync(client), token);
+            var client = await _listener.AcceptTcpClientAsync(_cts.Token);
+            _ = Task.Run(() => HandleClientAsync(client), _cts.Token);
         }
     }
+    
+    public Task StopAsync()
+    {
+        _cts.Cancel();
+        _listener.Stop();
+        return Task.CompletedTask;
+    }
+    
+    public Task ConnectAsReplicaAsync(string masterHost, int masterPort)
+    {
+        return _replicaManager.ConnectToMaster(masterHost, masterPort);
+    }
+
 
    private async Task HandleClientAsync(TcpClient client)
     {
@@ -58,7 +71,7 @@ public class TcpServer
 
             switch (isReplica)
             {
-                case false when line.Equals("REPLICA", StringComparison.CurrentCultureIgnoreCase):
+                case false when line.Equals("REPLICA_REGISTER", StringComparison.CurrentCultureIgnoreCase):
                     isReplica = true;
                     _replicaManager.RegisterReplica(client);
                     continue;

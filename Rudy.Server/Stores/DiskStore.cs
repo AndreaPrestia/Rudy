@@ -1,6 +1,6 @@
 ﻿namespace Rudy.Server.Stores;
 
-public class DiskStore
+internal class DiskStore
 {
     private const string File = "aof.log";
     private readonly Lock Lock = new();

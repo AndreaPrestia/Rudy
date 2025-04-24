@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Net.Sockets;
-using Rudy.Server;
 using Rudy.Server.Builders;
 using Rudy.Server.Stores;
 using Xunit.Abstractions;
@@ -16,7 +15,7 @@ public class IntegrationTest(ITestOutputHelper testOutputHelper)
         var cancellationTokenSource = new CancellationTokenSource();
         
         var masterServer = RudyServerBuilder.Initialize().WithPort(masterPort).Build();
-        _ = Task.Run(() => masterServer.StartAsync(cancellationTokenSource.Token), cancellationTokenSource.Token);
+        _ = Task.Run(() => masterServer.StartAsync(), cancellationTokenSource.Token);
         await Task.Delay(200, cancellationTokenSource.Token);
 
         // Setup 3 replicas
@@ -31,7 +30,7 @@ public class IntegrationTest(ITestOutputHelper testOutputHelper)
                 var replicaSocket = new TcpClient();
                 await replicaSocket.ConnectAsync("127.0.0.1", masterPort, cancellationTokenSource.Token);
                 var writer = new StreamWriter(replicaSocket.GetStream()) { AutoFlush = true };
-                await writer.WriteLineAsync("REPLICA");
+                await writer.WriteLineAsync("REPLICA_REGISTER");
 
                 var reader = new StreamReader(replicaSocket.GetStream());
                 while (true)
@@ -98,5 +97,7 @@ public class IntegrationTest(ITestOutputHelper testOutputHelper)
         {
             Assert.Equal("val999", val);
         }
+        
+        await masterServer.StopAsync();
     }
 }
