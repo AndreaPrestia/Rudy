@@ -81,3 +81,5 @@ Pull requests welcome! Ideas:
 
 ## 📜 License
 MIT © 2025 AndreaPrestia
+
+# ![Alt text](Rudy.png)
