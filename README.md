@@ -1,4 +1,4 @@
-# 🚀 Rudy (.NET)
+# Rudy (.NET)
 
 A minimal Redis-like distributed key-value store built in .NET 8 with support for:
 
