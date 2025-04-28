@@ -44,16 +44,14 @@ internal class ReplicaManager(CommandProcessor commandProcessor)
             var reader = new StreamReader(stream);
             var writer = new StreamWriter(stream) { AutoFlush = true };
 
-            // Register with master
             await writer.WriteLineAsync("REPLICA_REGISTER");
 
-            // Start listening for replication commands
             _ = Task.Run(async () =>
             {
                 while (true)
                 {
                     var command = await reader.ReadLineAsync();
-                    if (command == null) break; // disconnected
+                    if (command == null) break;
 
                     try
                     {

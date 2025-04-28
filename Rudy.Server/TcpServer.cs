@@ -7,39 +7,41 @@ namespace Rudy.Server;
 
 public class TcpServer
 {
+    private IPAddress _ipAddress;
+    private int _port;
     private readonly CancellationTokenSource _cts = new();
     private readonly TcpListener _listener;
     private readonly ReplicaManager _replicaManager;
     private readonly PubSubManager _pubSubManager;
     private readonly DiskStore _diskStore;
     private readonly MemoryStore _memoryStore;
-
-    internal TcpServer(IPAddress ipAddress, int port, ReplicaManager replicaManager, PubSubManager pubSubManager, DiskStore diskStore, MemoryStore memoryStore)
+    private readonly TcpClientManager _tcpClientManager;
+    
+    internal TcpServer(IPAddress ipAddress, int port, ReplicaManager replicaManager, PubSubManager pubSubManager, DiskStore diskStore, MemoryStore memoryStore, TcpClientManager tcpClientManager)
     {
+        _ipAddress = ipAddress;
+        _port = port;
         _replicaManager = replicaManager;
         _pubSubManager = pubSubManager;
         _diskStore = diskStore;
         _memoryStore = memoryStore;
-        _listener = new TcpListener(ipAddress, port);
+        _tcpClientManager = tcpClientManager;
+        _listener = new TcpListener(_ipAddress, _port);
     }
+
+    public IPAddress IpAddress => _ipAddress;
+    public int Port => _port;
     
-    public async Task StartAsync()
+    public void Start()
     {
         _listener.Start();
-        Console.WriteLine("Rudy server started on port " + ((IPEndPoint)_listener.LocalEndpoint).Port);
-
-        while (!_cts.Token.IsCancellationRequested)
-        {
-            var client = await _listener.AcceptTcpClientAsync(_cts.Token);
-            _ = Task.Run(() => HandleClientAsync(client), _cts.Token);
-        }
+        _ = Task.Run(() => AcceptLoop(_cts.Token));
     }
     
-    public Task StopAsync()
+    public void Stop()
     {
         _cts.Cancel();
         _listener.Stop();
-        return Task.CompletedTask;
     }
     
     public Task ConnectAsReplicaAsync(string masterHost, int masterPort)
@@ -47,7 +49,21 @@ public class TcpServer
         return _replicaManager.ConnectToMaster(masterHost, masterPort);
     }
 
+    private async Task AcceptLoop(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            TcpClient client;
+            try
+            {
+                client = await _listener.AcceptTcpClientAsync(token);
+            }
+            catch (OperationCanceledException) { break; }
 
+            _ = Task.Run(() => _tcpClientManager.HandleClientAsync(client), _cts.Token);
+        }
+    }
+    
    private async Task HandleClientAsync(TcpClient client)
     {
         var stream = client.GetStream();

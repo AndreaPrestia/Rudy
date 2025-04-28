@@ -1,22 +1,21 @@
 ﻿namespace Rudy.Server.Stores;
 
-internal class DiskStore
+internal class DiskStore(string filename)
 {
-    private const string File = "aof.log";
-    private readonly Lock Lock = new();
+    private readonly Lock _lock = new();
 
     public void Log(string commandLine)
     {
-        lock (Lock)
+        lock (_lock)
         {
-            System.IO.File.AppendAllText(File, commandLine + "\n");
+            File.AppendAllText(filename, commandLine + "\n");
         }
     }
 
     public IEnumerable<string> Replay()
     {
-        if (!System.IO.File.Exists(File)) yield break;
-        foreach (var line in System.IO.File.ReadAllLines(File))
+        if (!File.Exists(filename)) yield break;
+        foreach (var line in File.ReadAllLines(filename))
         {
             yield return line;
         }

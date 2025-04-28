@@ -31,7 +31,6 @@ internal class PubSubManager
                 }
                 catch
                 {
-                    // Clean dead clients
                     clients.Remove(client);
                 }
             }
