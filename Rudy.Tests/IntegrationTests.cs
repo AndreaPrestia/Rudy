@@ -24,8 +24,8 @@ public class IntegrationTests(ITestOutputHelper output) : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData(6390, 3)]
-    public async Task RudyServer_FullFlow_WithRealReplicas_ShouldSyncAndBenchmarkCorrectly(int masterPort, int replicaCount)
+    [InlineData(6390, 3, 1000)]
+    public async Task RudyServer_FullFlow_WithRealReplicas_ShouldSyncAndBenchmarkCorrectly(int masterPort, int replicaCount, int benchmarkOperations)
     {
         _masterServer = RudyServerBuilder.Initialize($"{masterPort}.log")
             .WithIpAddress(IPAddress.Loopback)
@@ -74,16 +74,15 @@ public class IntegrationTests(ITestOutputHelper output) : IAsyncLifetime
         var benchWriter = new StreamWriter(benchClient.GetStream()) { AutoFlush = true };
         var benchReader = new StreamReader(benchClient.GetStream());
 
-        const int ops = 1000;
         var sw = Stopwatch.StartNew();
-        for (var i = 0; i < ops; i++)
+        for (var i = 0; i < benchmarkOperations; i++)
         {
             await benchWriter.WriteLineAsync($"SET key{i} val{i}");
             await benchReader.ReadLineAsync(_cts.Token); // OK
         }
         sw.Stop();
-        var opsPerSec = ops / sw.Elapsed.TotalSeconds;
-        output.WriteLine($"Benchmark: {ops} SETs in {sw.Elapsed.TotalSeconds:F2}s = {opsPerSec:F0} ops/sec");
+        var opsPerSec = benchmarkOperations / sw.Elapsed.TotalSeconds;
+        output.WriteLine($"Benchmark: {benchmarkOperations} SETs in {sw.Elapsed.TotalSeconds:F2}s = {opsPerSec:F0} ops/sec");
 
         await Task.Delay(500);
 
