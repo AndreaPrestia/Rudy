@@ -97,6 +97,11 @@ public class IntegrationTests(ITestOutputHelper output) : IAsyncLifetime
             var value = await reader.ReadLineAsync(_cts.Token);
 
             Assert.Equal("val999", value);
+            
+            await writer.WriteLineAsync("HEALTH");
+            var healthValue = await reader.ReadLineAsync(_cts.Token);
+
+            Assert.Equal("OK", healthValue);
         }
     }
 }
