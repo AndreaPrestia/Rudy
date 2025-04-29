@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net;
 using System.Net.Sockets;
 using Rudy.Server;
 using Rudy.Server.Builders;
@@ -8,7 +9,7 @@ namespace Rudy.Tests;
 
 public class IntegrationTests(ITestOutputHelper output) : IAsyncLifetime
 {
-    private readonly List<RudyServer> _replicaServers = new();
+    private readonly List<RudyServer> _replicaServers = [];
     private RudyServer? _masterServer;
     private readonly CancellationTokenSource _cts = new();
 
@@ -27,6 +28,7 @@ public class IntegrationTests(ITestOutputHelper output) : IAsyncLifetime
     public async Task RudyServer_FullFlow_WithRealReplicas_ShouldSyncAndBenchmarkCorrectly(int masterPort, int replicaCount)
     {
         _masterServer = RudyServerBuilder.Initialize($"{masterPort}.log")
+            .WithIpAddress(IPAddress.Loopback)
             .WithPort(masterPort)
             .Build();
         _ = Task.Run(() => _masterServer.Start(), _cts.Token);
@@ -37,29 +39,30 @@ public class IntegrationTests(ITestOutputHelper output) : IAsyncLifetime
             var replicaPort = masterPort + i + 1;
 
             var replica = RudyServerBuilder.Initialize($"{replicaPort}.log")
+                .WithIpAddress(IPAddress.Loopback)
                 .WithPort(replicaPort)
                 .Build();
 
             _replicaServers.Add(replica);
             _ = Task.Run(() => replica.Start(), _cts.Token);
             
-            await replica.ConnectAsReplicaAsync("127.0.0.1", masterPort);
+            await replica.ConnectAsReplicaAsync(_masterServer.Host, _masterServer.Port);
         }
 
         var subscriber = new TcpClient();
-        await subscriber.ConnectAsync("127.0.0.1", masterPort, _cts.Token);
+        await subscriber.ConnectAsync(_masterServer.Host, _masterServer.Port, _cts.Token);
         var subWriter = new StreamWriter(subscriber.GetStream()) { AutoFlush = true };
         var subReader = new StreamReader(subscriber.GetStream());
-        await subWriter.WriteLineAsync("SUBSCRIBE news");
-        await subReader.ReadLineAsync(_cts.Token); // OK subscribed
+        await subWriter.WriteLineAsync("SUB news");
+        await subReader.ReadLineAsync(_cts.Token);
 
         var publisher = new TcpClient();
-        await publisher.ConnectAsync("127.0.0.1", masterPort, _cts.Token);
+        await publisher.ConnectAsync(_masterServer.Host, _masterServer.Port, _cts.Token);
         var pubWriter = new StreamWriter(publisher.GetStream()) { AutoFlush = true };
         var pubReader = new StreamReader(publisher.GetStream());
 
         const string testMessage = "hello-world";
-        await pubWriter.WriteLineAsync($"PUBLISH news {testMessage}");
+        await pubWriter.WriteLineAsync($"PUB news {testMessage}");
         var pubAck = await pubReader.ReadLineAsync(_cts.Token);
         Assert.Contains("Delivered", pubAck);
 
@@ -67,7 +70,7 @@ public class IntegrationTests(ITestOutputHelper output) : IAsyncLifetime
         Assert.Contains($"message news {testMessage}", received);
 
         var benchClient = new TcpClient();
-        await benchClient.ConnectAsync("127.0.0.1", masterPort, _cts.Token);
+        await benchClient.ConnectAsync(_masterServer.Host, _masterServer.Port, _cts.Token);
         var benchWriter = new StreamWriter(benchClient.GetStream()) { AutoFlush = true };
         var benchReader = new StreamReader(benchClient.GetStream());
 
@@ -87,7 +90,7 @@ public class IntegrationTests(ITestOutputHelper output) : IAsyncLifetime
         foreach (var replica in _replicaServers)
         {
             var client = new TcpClient();
-            await client.ConnectAsync("127.0.0.1", replica.Port, _cts.Token);
+            await client.ConnectAsync(replica.Host, replica.Port, _cts.Token);
             var writer = new StreamWriter(client.GetStream()) { AutoFlush = true };
             var reader = new StreamReader(client.GetStream());
 

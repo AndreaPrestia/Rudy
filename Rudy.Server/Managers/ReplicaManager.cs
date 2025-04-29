@@ -44,7 +44,7 @@ internal class ReplicaManager(CommandProcessor commandProcessor)
             var reader = new StreamReader(stream);
             var writer = new StreamWriter(stream) { AutoFlush = true };
 
-            await writer.WriteLineAsync("REPLICA_REGISTER");
+            await writer.WriteLineAsync("CLONE");
 
             _ = Task.Run(async () =>
             {

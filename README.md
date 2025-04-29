@@ -65,6 +65,17 @@ This command will launch **MemoryStoreTests** and **IntegrationTests**.
 ### 📈 Benchmarking
 This part is part of the test suite. It is in the **IntegrationTests.cs** class and will write the result in the console with **ITestOutputHelper**.
 
+## 🛢️ Commands allowed
+
+- PING
+- SET
+- GET
+- DEL
+- SUB
+- PUB
+- CLONE
+- HEALTH
+
 
 ## 🧑‍💻 Contributing
 Pull requests welcome! Ideas:

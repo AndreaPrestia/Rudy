@@ -3,9 +3,13 @@ using Rudy.Server.Stores;
 
 namespace Rudy.Server.Managers;
 
-internal class TcpClientManager(ReplicaManager replicaManager, PubSubManager pubSubManager, MemoryStore memoryStore, DiskStore diskStore)
+internal class TcpClientManager(
+    ReplicaManager replicaManager,
+    PubSubManager pubSubManager,
+    MemoryStore memoryStore,
+    DiskStore diskStore)
 {
-     public async Task HandleClientAsync(TcpClient client)
+    public async Task HandleClientAsync(TcpClient client)
     {
         var stream = client.GetStream();
         var reader = new StreamReader(stream);
@@ -28,7 +32,7 @@ internal class TcpClientManager(ReplicaManager replicaManager, PubSubManager pub
 
             switch (isReplica)
             {
-                case false when line.Equals("REPLICA_REGISTER", StringComparison.CurrentCultureIgnoreCase):
+                case false when line.Equals("CLONE", StringComparison.CurrentCultureIgnoreCase):
                     isReplica = true;
                     replicaManager.RegisterReplica(client);
                     continue;
@@ -61,6 +65,7 @@ internal class TcpClientManager(ReplicaManager replicaManager, PubSubManager pub
                         replicaManager.Broadcast(line);
                         response = "OK";
                     }
+
                     break;
 
                 case "GET":
@@ -69,6 +74,7 @@ internal class TcpClientManager(ReplicaManager replicaManager, PubSubManager pub
                         var val = memoryStore.Get(parts[1]);
                         response = val?.ToString() ?? "(nil)";
                     }
+
                     break;
 
                 case "DEL":
@@ -79,22 +85,29 @@ internal class TcpClientManager(ReplicaManager replicaManager, PubSubManager pub
                         replicaManager.Broadcast(line);
                         response = removed ? "1" : "0";
                     }
+
                     break;
 
-                case "SUBSCRIBE":
+                case "SUB":
                     if (parts.Length >= 2)
                     {
                         pubSubManager.Subscribe(parts[1], client);
                         response = $"Subscribed to {parts[1]}";
                     }
+
                     break;
 
-                case "PUBLISH":
+                case "PUB":
                     if (parts.Length >= 3)
                     {
                         var count = pubSubManager.Publish(parts[1], parts[2]);
                         response = $"Delivered to {count} subscriber(s)";
                     }
+
+                    break;
+
+                case "HEALTH":
+                    response = "OK";
                     break;
             }
 
