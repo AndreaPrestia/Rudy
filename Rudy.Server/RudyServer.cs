@@ -155,7 +155,9 @@ public class RudyServer
                         response = $"Delivered to {count} subscriber(s)";
                     }
                     break;
-                
+                case "HEALTHCHECK":
+                    response = "Ok";
+                    break;
             }
 
             await writer.WriteLineAsync(response);
