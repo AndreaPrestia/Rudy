@@ -8,8 +8,8 @@ namespace Rudy.Tests;
 
 public class IntegrationTest(ITestOutputHelper output) : IAsyncLifetime
 {
-    private readonly List<TcpServer> _replicaServers = new();
-    private TcpServer? _masterServer;
+    private readonly List<RudyServer> _replicaServers = new();
+    private RudyServer? _masterServer;
     private readonly CancellationTokenSource _cts = new();
 
     public Task InitializeAsync() => Task.CompletedTask;

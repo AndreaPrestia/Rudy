@@ -5,7 +5,7 @@ using Rudy.Server.Stores;
 
 namespace Rudy.Server;
 
-public class TcpServer
+public class RudyServer
 {
     private IPAddress _ipAddress;
     private int _port;
@@ -17,7 +17,7 @@ public class TcpServer
     private readonly MemoryStore _memoryStore;
     private readonly TcpClientManager _tcpClientManager;
     
-    internal TcpServer(IPAddress ipAddress, int port, ReplicaManager replicaManager, PubSubManager pubSubManager, DiskStore diskStore, MemoryStore memoryStore, TcpClientManager tcpClientManager)
+    internal RudyServer(IPAddress ipAddress, int port, ReplicaManager replicaManager, PubSubManager pubSubManager, DiskStore diskStore, MemoryStore memoryStore, TcpClientManager tcpClientManager)
     {
         _ipAddress = ipAddress;
         _port = port;
@@ -155,6 +155,7 @@ public class TcpServer
                         response = $"Delivered to {count} subscriber(s)";
                     }
                     break;
+                
             }
 
             await writer.WriteLineAsync(response);

@@ -48,8 +48,8 @@ public class RudyServerBuilder
         return this;
     }
 
-    public TcpServer Build()
+    public RudyServer Build()
     {
-        return new TcpServer(_ipAddress, _port, _replicaManager, _pubSubManager, _diskStore, _memoryStore, _tcpClientManager);
+        return new RudyServer(_ipAddress, _port, _replicaManager, _pubSubManager, _diskStore, _memoryStore, _tcpClientManager);
     }
 }
