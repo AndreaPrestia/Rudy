@@ -7,8 +7,8 @@ namespace Rudy.Server;
 
 public class RudyServer
 {
-    private IPAddress _ipAddress;
-    private int _port;
+    private readonly IPAddress _ipAddress;
+    private readonly int _port;
     private readonly CancellationTokenSource _cts = new();
     private readonly TcpListener _listener;
     private readonly ReplicaManager _replicaManager;
@@ -29,7 +29,7 @@ public class RudyServer
         _listener = new TcpListener(_ipAddress, _port);
     }
 
-    public IPAddress IpAddress => _ipAddress;
+    public string Host =>  _ipAddress.MapToIPv4().ToString();
     public int Port => _port;
     
     public void Start()

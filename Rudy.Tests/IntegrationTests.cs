@@ -6,7 +6,7 @@ using Xunit.Abstractions;
 
 namespace Rudy.Tests;
 
-public class IntegrationTest(ITestOutputHelper output) : IAsyncLifetime
+public class IntegrationTests(ITestOutputHelper output) : IAsyncLifetime
 {
     private readonly List<RudyServer> _replicaServers = new();
     private RudyServer? _masterServer;
