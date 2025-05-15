@@ -86,6 +86,7 @@ Pull requests welcome! Ideas:
 - Snapshotting & AOF replay
 - CLI tool
 - Docker Support
+- Better concurrency management
 
 ## 📜 License
 MIT © 2025 AndreaPrestia
