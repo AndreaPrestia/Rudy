@@ -7,23 +7,21 @@ namespace Rudy.Server.Builders;
 
 public class RudyServerBuilder
 {
-    private readonly ReplicaManager _replicaManager;
-    private readonly TcpClientManager _tcpClientManager;
+    private readonly MemoryStore _memoryStore;
     private int _port;
     private IPAddress _ipAddress;
+    private DiskStore? _diskStore;
+    private string? _logPath;
 
-    private RudyServerBuilder(string fileName)
+    private RudyServerBuilder()
     {
         _ipAddress = IPAddress.Any;
-        var memoryStore = MemoryStore.Create();
-        var diskStore = new DiskStore(fileName);
-        _replicaManager = new ReplicaManager(new CommandProcessor(memoryStore, diskStore));
-        _tcpClientManager = new TcpClientManager(_replicaManager, new PubSubManager(), memoryStore, diskStore);
+        _memoryStore = MemoryStore.Create();
     }
 
-    public static RudyServerBuilder Initialize(string fileName)
+    public static RudyServerBuilder Initialize()
     {
-        return new RudyServerBuilder(fileName);
+        return new RudyServerBuilder();
     }
 
     public RudyServerBuilder WithIpAddress(string ipAddress)
@@ -38,8 +36,23 @@ public class RudyServerBuilder
         return this;
     }
 
+    public RudyServerBuilder WithDiskStore(string path)
+    {
+        _diskStore = new DiskStore(Path.Combine(path, ".db"));
+        return this;
+    }
+
+    public RudyServerBuilder WithLogging(string? logPath = null)
+    {
+        _logPath = logPath;
+        return this;
+    }
+
     public RudyServer Build()
     {
-        return new RudyServer(_ipAddress, _port, _replicaManager, _tcpClientManager);
+        Logger.Initialize(_logPath);
+        var replicaManager = new ReplicaManager(new CommandProcessor(_memoryStore,  _diskStore));
+        var tcpClientManager = new TcpClientManager(replicaManager, new PubSubManager(), _memoryStore, _diskStore);
+        return new RudyServer(_ipAddress, _port, replicaManager, tcpClientManager);
     }
 }

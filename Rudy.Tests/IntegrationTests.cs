@@ -26,10 +26,14 @@ public class IntegrationTests(ITestOutputHelper output) : IAsyncLifetime
     [InlineData("127.0.0.1", 6390, 3, 1000)]
     public async Task RudyServer_FullFlow_WithRealReplicas_ShouldSyncAndBenchmarkCorrectly(string masterIp, int masterPort, int replicaCount, int benchmarkOperations)
     {
-        _masterServer = RudyServerBuilder.Initialize($"{masterPort}.log")
+        _masterServer = RudyServerBuilder
+            .Initialize()
+            .WithLogging()
             .WithIpAddress(masterIp)
             .WithPort(masterPort)
+            .WithDiskStore(masterPort.ToString())
             .Build();
+        
         _ = Task.Run(() => _masterServer.Start(), _cts.Token);
         await Task.Delay(500);
 
@@ -37,9 +41,12 @@ public class IntegrationTests(ITestOutputHelper output) : IAsyncLifetime
         {
             var replicaPort = masterPort + i + 1;
 
-            var replica = RudyServerBuilder.Initialize($"{replicaPort}.log")
+            var replica = RudyServerBuilder
+                .Initialize()
+                .WithLogging()
                 .WithIpAddress(masterIp)
                 .WithPort(replicaPort)
+                .WithDiskStore(replicaPort.ToString())
                 .Build();
 
             _replicaServers.Add(replica);

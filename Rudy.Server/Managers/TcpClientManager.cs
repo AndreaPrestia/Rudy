@@ -7,7 +7,7 @@ internal class TcpClientManager(
     ReplicaManager replicaManager,
     PubSubManager pubSubManager,
     MemoryStore memoryStore,
-    DiskStore diskStore)
+    DiskStore? diskStore)
 {
     public async Task HandleClientAsync(TcpClient client)
     {
@@ -30,7 +30,7 @@ internal class TcpClientManager(
                 break;
             }
 
-            diskStore.Log(line);
+            diskStore?.Log(line);
 
             switch (isReplica)
             {

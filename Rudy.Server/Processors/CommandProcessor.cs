@@ -2,14 +2,14 @@
 
 namespace Rudy.Server.Processors;
 
-internal class CommandProcessor(MemoryStore store, DiskStore disk)
+internal class CommandProcessor(MemoryStore store, DiskStore? disk)
 {
     public bool ApplyReplicatedCommand(string command)
     {
         var parts = command.Split(' ', 3);
         var cmd = parts[0].ToUpperInvariant();
 
-        disk.Log(command);
+        disk?.Log(command);
 
         switch (cmd)
         {
