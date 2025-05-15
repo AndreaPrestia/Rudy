@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Net;
 using System.Net.Sockets;
 using Rudy.Server;
 using Rudy.Server.Builders;
@@ -24,11 +23,11 @@ public class IntegrationTests(ITestOutputHelper output) : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData(6390, 3, 1000)]
-    public async Task RudyServer_FullFlow_WithRealReplicas_ShouldSyncAndBenchmarkCorrectly(int masterPort, int replicaCount, int benchmarkOperations)
+    [InlineData("127.0.0.1", 6390, 3, 1000)]
+    public async Task RudyServer_FullFlow_WithRealReplicas_ShouldSyncAndBenchmarkCorrectly(string masterIp, int masterPort, int replicaCount, int benchmarkOperations)
     {
         _masterServer = RudyServerBuilder.Initialize($"{masterPort}.log")
-            .WithIpAddress(IPAddress.Loopback)
+            .WithIpAddress(masterIp)
             .WithPort(masterPort)
             .Build();
         _ = Task.Run(() => _masterServer.Start(), _cts.Token);
@@ -39,7 +38,7 @@ public class IntegrationTests(ITestOutputHelper output) : IAsyncLifetime
             var replicaPort = masterPort + i + 1;
 
             var replica = RudyServerBuilder.Initialize($"{replicaPort}.log")
-                .WithIpAddress(IPAddress.Loopback)
+                .WithIpAddress(masterIp)
                 .WithPort(replicaPort)
                 .Build();
 

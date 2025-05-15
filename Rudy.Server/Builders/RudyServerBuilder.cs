@@ -35,12 +35,6 @@ public class RudyServerBuilder
         _ipAddress = IPAddress.Parse(ipAddress);
         return this;
     }
-    
-    public RudyServerBuilder WithIpAddress(IPAddress ipAddress)
-    {
-        _ipAddress = ipAddress;
-        return this;
-    }
 
     public RudyServerBuilder WithPort(int port)
     {
