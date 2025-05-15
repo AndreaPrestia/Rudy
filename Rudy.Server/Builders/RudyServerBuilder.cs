@@ -7,10 +7,7 @@ namespace Rudy.Server.Builders;
 
 public class RudyServerBuilder
 {
-    private readonly DiskStore _diskStore;
-    private readonly PubSubManager _pubSubManager;
     private readonly ReplicaManager _replicaManager;
-    private readonly MemoryStore _memoryStore;
     private readonly TcpClientManager _tcpClientManager;
     private int _port;
     private IPAddress _ipAddress;
@@ -18,11 +15,10 @@ public class RudyServerBuilder
     private RudyServerBuilder(string fileName)
     {
         _ipAddress = IPAddress.Any;
-        _memoryStore = MemoryStore.Create();
-        _diskStore = new DiskStore(fileName);
-        _pubSubManager = new PubSubManager();
-        _replicaManager = new ReplicaManager(new CommandProcessor(_memoryStore, _diskStore));
-        _tcpClientManager = new TcpClientManager(_replicaManager, _pubSubManager, _memoryStore, _diskStore);
+        var memoryStore = MemoryStore.Create();
+        var diskStore = new DiskStore(fileName);
+        _replicaManager = new ReplicaManager(new CommandProcessor(memoryStore, diskStore));
+        _tcpClientManager = new TcpClientManager(_replicaManager, new PubSubManager(), memoryStore, diskStore);
     }
 
     public static RudyServerBuilder Initialize(string fileName)
@@ -44,6 +40,6 @@ public class RudyServerBuilder
 
     public RudyServer Build()
     {
-        return new RudyServer(_ipAddress, _port, _replicaManager, _pubSubManager, _diskStore, _memoryStore, _tcpClientManager);
+        return new RudyServer(_ipAddress, _port, _replicaManager, _tcpClientManager);
     }
 }

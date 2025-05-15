@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using Rudy.Server.Managers;
-using Rudy.Server.Stores;
 
 namespace Rudy.Server;
 
@@ -12,19 +11,13 @@ public class RudyServer
     private readonly CancellationTokenSource _cts = new();
     private readonly TcpListener _listener;
     private readonly ReplicaManager _replicaManager;
-    private readonly PubSubManager _pubSubManager;
-    private readonly DiskStore _diskStore;
-    private readonly MemoryStore _memoryStore;
     private readonly TcpClientManager _tcpClientManager;
     
-    internal RudyServer(IPAddress ipAddress, int port, ReplicaManager replicaManager, PubSubManager pubSubManager, DiskStore diskStore, MemoryStore memoryStore, TcpClientManager tcpClientManager)
+    internal RudyServer(IPAddress ipAddress, int port, ReplicaManager replicaManager, TcpClientManager tcpClientManager)
     {
         _ipAddress = ipAddress;
         _port = port;
         _replicaManager = replicaManager;
-        _pubSubManager = pubSubManager;
-        _diskStore = diskStore;
-        _memoryStore = memoryStore;
         _tcpClientManager = tcpClientManager;
         _listener = new TcpListener(_ipAddress, _port);
     }

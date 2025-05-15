@@ -30,6 +30,8 @@ internal class TcpClientManager(
                 break;
             }
 
+            diskStore.Log(line);
+
             switch (isReplica)
             {
                 case false when line.Equals("CLONE", StringComparison.CurrentCultureIgnoreCase):
@@ -61,7 +63,6 @@ internal class TcpClientManager(
                             ttl = TimeSpan.FromSeconds(int.Parse(parts[4]));
 
                         memoryStore.Set(key, val, ttl);
-                        diskStore.Log(line);
                         replicaManager.Broadcast(line);
                         response = "OK";
                     }
@@ -81,7 +82,6 @@ internal class TcpClientManager(
                     if (parts.Length >= 2)
                     {
                         var removed = memoryStore.Delete(parts[1]);
-                        diskStore.Log(line);
                         replicaManager.Broadcast(line);
                         response = removed ? "1" : "0";
                     }
